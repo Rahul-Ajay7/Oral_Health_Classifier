@@ -26,7 +26,7 @@ class OralCancerModel(nn.Module):
 # Load model
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 model = OralCancerModel()
-model.load_state_dict(torch.load("model.pth", map_location=device))
+model.load_state_dict(torch.load("vit_tiny_dental_updated.pth", map_location=device))
 model.eval()
 model.to(device)
 
