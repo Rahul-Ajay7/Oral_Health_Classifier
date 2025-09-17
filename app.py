@@ -16,7 +16,7 @@ model = timm.create_model('vit_tiny_patch16_224', pretrained=False)
 model.head = nn.Linear(model.head.in_features, NUM_CLASSES)
 
 # Load the saved model weights
-model.load_state_dict(torch.load("vit_tiny_dental.pth", map_location=device))
+model.load_state_dict(torch.load("vit_tiny_dental_updated.pth", map_location=device))
 model.to(device)
 model.eval()
 
