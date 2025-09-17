@@ -20,8 +20,8 @@ model.load_state_dict(torch.load("vit_tiny_dental.pth", map_location=device))
 model.to(device)
 model.eval()
 
-# Class names in correct order
-classes = ['hypodontia', 'Tooth Discoloration', 'Data caries', 'Gingivitis', 'Mouth Ulcer', 'Calculus']
+# Class names in the correct order based on folder structure
+classes = ['Calculus', 'Data caries', 'Gingivitis', 'Mouth Ulcer', 'Tooth Discoloration', 'hypodontia']
 
 # Preprocessing using ImageNet normalization
 transform = transforms.Compose([
