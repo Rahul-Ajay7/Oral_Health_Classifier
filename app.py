@@ -1,62 +1,46 @@
 import torch
-import torch.nn as nn
-from torchvision import transforms
-from PIL import Image
+import timm
 import gradio as gr
+from PIL import Image
+from torchvision import transforms
 
-# Define your model architecture (must match the one used for training)
-class OralCancerModel(nn.Module):
-    def __init__(self):
-        super(OralCancerModel, self).__init__()
-        # Example: replace this with your actual model architecture
-        self.model = nn.Sequential(
-            nn.Conv2d(3, 16, 3, padding=1),
-            nn.ReLU(),
-            nn.MaxPool2d(2),
-            nn.Conv2d(16, 32, 3, padding=1),
-            nn.ReLU(),
-            nn.MaxPool2d(2),
-            nn.Flatten(),
-            nn.Linear(32*64*64, 6)  # 6 classes
-        )
+# Set device
+device = "cuda" if torch.cuda.is_available() else "cpu"
 
-    def forward(self, x):
-        return self.model(x)
+# Load the ViT model architecture
+model = timm.create_model('vit_tiny_patch16_224', pretrained=False, num_classes=6)
 
-# Load model
-device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-model = OralCancerModel()
+# Load the saved model weights
 model.load_state_dict(torch.load("vit_tiny_dental_updated.pth", map_location=device))
-model.eval()
 model.to(device)
+model.eval()
 
-# Image preprocessing
-transform = transforms.Compose([
-    transforms.Resize((256, 256)),  # Match the size used during training
-    transforms.ToTensor(),
-])
-
-# Classes
+# Class names
 classes = ['hypodontia', 'Tooth Discoloration', 'Data caries', 'Gingivitis', 'Mouth Ulcer', 'Calculus']
+
+# Preprocessing
+transform = transforms.Compose([
+    transforms.Resize((224, 224)),
+    transforms.ToTensor(),
+    transforms.Normalize(mean=(0.5, 0.5, 0.5), std=(0.5, 0.5, 0.5))
+])
 
 # Prediction function
 def predict(image):
-    image = transform(image).unsqueeze(0).to(device)  # Add batch dimension
+    image = transform(image).unsqueeze(0).to(device)
     with torch.no_grad():
-        output = model(image)
-        probs = torch.softmax(output, dim=1)
-        class_idx = torch.argmax(probs, dim=1).item()
-        confidence = probs[0][class_idx].item()
-    
-    return {classes[class_idx]: confidence}
+        outputs = model(image)
+        _, predicted = torch.max(outputs, 1)
+    return classes[predicted.item()]
 
 # Gradio interface
-iface = gr.Interface(
+interface = gr.Interface(
     fn=predict,
     inputs=gr.Image(type="pil"),
-    outputs=gr.Label(num_top_classes=1),
-    title="Oral Health Classifier",
-    description="Upload an oral image and predict its class."
+    outputs="text",
+    title="Oral Cancer Detection",
+    description="Upload an image of oral health condition to classify."
 )
 
-iface.launch()
+if __name__ == "__main__":
+    interface.launch()
